@@ -1,0 +1,91 @@
+#define _POSIX_C_SOURCE 200809L
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+enum { HIST = 5 };
+
+static void chomp_newline(char *s) {
+  size_t n = strlen(s);
+  if (n > 0 && s[n - 1] == '\n') {
+    s[n - 1] = '\0';
+  }
+}
+
+static void history_clear(char *history[HIST], long long *count) {
+    for (int i = 0; i < HIST; i++) {
+        free(history[i]);
+        history[i] = NULL;
+    }
+    *count = 0;
+}
+
+static void history_add(char *history[HIST], long long *count,
+                        const char *line) {
+  int idx = (int)(*count % HIST);
+
+  free(history[idx]);
+  history[idx] = strdup(line);
+  if (history[idx] == NULL) {
+    perror("strdup");
+    exit(1);
+  }
+
+  (*count)++;
+}
+
+static void history_print(char *history[HIST], long long count) {
+  long long n = (count < HIST) ? count : HIST;
+  long long start = count - n;
+
+  for (long long i = start; i < count; i++) {
+    char *s = history[i % HIST];
+    if (s) {
+      puts(s);
+    }
+  }
+}
+
+int main(void) {
+  char *history[HIST] = {0};
+  long long count = 0;
+
+  char *line = NULL;
+  size_t cap = 0;
+
+  while (1) {
+    printf("Enter input: ");
+    fflush(stdout);
+
+    ssize_t nread = getline(&line, &cap, stdin);
+    if (nread == -1) {
+      putchar('\n');
+      break;
+    }
+
+    chomp_newline(line);
+    
+    if (line[0] == '\0') {
+            continue;
+        }
+
+    if (strcmp(line, "clear") == 0) {
+            history_clear(history, &count);
+            continue; // "clear" itself is not stored
+        }
+
+    history_add(history, &count, line);
+
+    if (strcmp(line, "print") == 0) {
+      history_print(history, count);
+    }
+  }
+
+  for (int i = 0; i < HIST; i++) {
+    free(history[i]);
+  }
+  free(line);
+
+  return 0;
+}
