@@ -17,7 +17,7 @@ void initialize_block(struct header *block, uint64_t size, struct header *next,
 
 int find_first_fit(struct header *free_list_ptr, uint64_t size) {
   // TODO: Implement first fit
-  struct header *curr = free_list_ptr;
+   struct header *curr = free_list_ptr;
   while (curr != NULL) {
     if (curr->size >= size) {
       return curr->id;
